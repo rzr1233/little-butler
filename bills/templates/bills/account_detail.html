@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ account.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">{{ account.name }}</h1>
+                    <p class="text-muted mb-0">
+                        <i class="fas {% if account.type == 'personal' %}fa-user{% else %}fa-users{% endif %} me-1"></i>
+                        {{ account.get_type_display }}
+                        {% if account.family %}
+                        · {{ account.family.name }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if can_edit %}
+                    <a href="{% url 'bills:account-update' account.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> 编辑账本
+                    </a>
+                    {% endif %}
+                    {% if is_owner %}
+                    <a href="{% url 'bills:account-delete' account.pk %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash-alt"></i> 删除账本
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">总收入</h6>
+                            <h3 class="card-title text-success mb-0">{{ total_income }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">总支出</h6>
+                            <h3 class="card-title text-danger mb-0">{{ total_expense }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">结余</h6>
+                            <h3 class="card-title {% if balance >= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
+                                {{ balance }}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">最近账单</h5>
+                        <a href="{% url 'bills:bill-create' account.pk %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> 记一笔
+                        </a>
+                    </div>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for bill in recent_bills %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="{{ bill.category.icon }} {% if bill.type == 'income' %}text-success{% else %}text-danger{% endif %}"></i>
+                                    <h6 class="mb-0">{{ bill.category.name }}</h6>
+                                </div>
+                                <small class="text-muted d-block">{{ bill.date|date:"SHORT_DATETIME_FORMAT" }}</small>
+                                {% if bill.description %}
+                                <small class="text-muted d-block">{{ bill.description }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <div class="{% if bill.type == 'income' %}text-success{% else %}text-danger{% endif %} mb-1">
+                                    {{ bill.type|yesno:"+,-" }}{{ bill.amount }}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'bills:bill-update' bill.pk %}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'bills:bill-delete' bill.pk %}" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <img src="{% static 'images/empty.svg' %}" alt="没有账单" class="img-fluid mb-3" style="max-width: 200px;">
+                        <p class="text-muted">还没有任何账单记录</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

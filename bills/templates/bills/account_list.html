@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}我的账本{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">我的账本</h1>
+        <a href="{% url 'bills:account-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 新建账本
+        </a>
+    </div>
+
+    {% if personal_accounts or family_accounts %}
+        <!-- 个人账本 -->
+        {% if personal_accounts %}
+        <h2 class="h5 mb-3">个人账本</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+            {% for account in personal_accounts %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <a href="{% url 'bills:account-detail' account.pk %}" class="text-decoration-none">
+                                    {{ account.name }}
+                                </a>
+                            </h5>
+                            <span class="badge bg-info">个人账本</span>
+                        </div>
+                        <p class="card-text">{{ account.description|default:"暂无描述" }}</p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">创建于 {{ account.created_at|date:"Y-m-d" }}</small>
+                            <a href="{% url 'bills:account-update' account.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i> 编辑
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 家庭账本 -->
+        {% if family_accounts %}
+        <h2 class="h5 mb-3">家庭账本</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for account in family_accounts %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <a href="{% url 'bills:account-detail' account.pk %}" class="text-decoration-none">
+                                    {{ account.name }}
+                                </a>
+                            </h5>
+                            <span class="badge bg-success">家庭账本</span>
+                        </div>
+                        {% if account.family %}
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-home"></i> {{ account.family.name }}
+                        </p>
+                        {% endif %}
+                        <p class="card-text">{{ account.description|default:"暂无描述" }}</p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">创建于 {{ account.created_at|date:"Y-m-d" }}</small>
+                            {% if account.owner == user %}
+                            <a href="{% url 'bills:account-update' account.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i> 编辑
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <img src="{% static 'images/empty.svg' %}" alt="暂无数据" class="mb-3" style="max-width: 200px;">
+            <h3 class="h4 mb-3">还没有账本</h3>
+            <p class="text-muted mb-4">创建一个账本开始记账吧！</p>
+            <a href="{% url 'bills:account-create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 新建账本
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

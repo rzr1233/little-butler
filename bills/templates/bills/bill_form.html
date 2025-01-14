@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}编辑账单{% else %}新建账单{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{% if form.instance.pk %}编辑账单{% else %}新建账单{% endif %}</h1>
+                <a href="{% url 'bills:account-detail' account.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回账本
+                </a>
+            </div>
+            
+            <form method="post" class="card">
+                {% csrf_token %}
+                <div class="card-body">
+                    {{ form|crispy }}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存账单
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.querySelector('#id_type');
+    const categorySelect = document.querySelector('#id_category');
+    
+    // 预加载的分类数据
+    const categories = {
+        income: {{ form.all_categories.income|safe }},
+        expense: {{ form.all_categories.expense|safe }}
+    };
+    
+    // 更新分类选项
+    function updateCategories() {
+        const selectedType = typeSelect.value;
+        if (!selectedType) {
+            return;  // 如果没有选择类型，保持当前分类不变
+        }
+        
+        const currentValue = categorySelect.value;  // 保存当前选中的值
+        
+        // 更新分类选项
+        categorySelect.innerHTML = '<option value="">---------</option>';
+        categories[selectedType].forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            if (category.id === parseInt(currentValue)) {
+                option.selected = true;  // 如果是当前选中的值，保持选中状态
+            }
+            categorySelect.appendChild(option);
+        });
+    }
+    
+    // 监听类型变化
+    typeSelect.addEventListener('change', updateCategories);
+    
+    // 初始化分类选项
+    updateCategories();
+});
+</script>
+{% endblock %} 

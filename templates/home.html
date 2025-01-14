@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}首页 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">欢迎使用家庭记账系统</h1>
+        <p class="lead mb-4">轻松管理您的个人和家庭财务，让记账更简单</p>
+        
+        {% if user.is_authenticated %}
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                            <h3>记账管理</h3>
+                            <p>开始记录您的收支情况</p>
+                            <a href="{% url 'bills:account-list' %}" class="btn btn-primary">
+                                <i class="fas fa-book"></i> 我的账本
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-chart-pie fa-3x text-primary mb-3"></i>
+                            <h3>数据统计</h3>
+                            <p>查看您的财务报告</p>
+                            <a href="#" class="btn btn-primary">
+                                <i class="fas fa-chart-bar"></i> 查看报告
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                            <h3>新用户？</h3>
+                            <p>创建账号开始使用</p>
+                            <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> 立即注册
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <i class="fas fa-sign-in-alt fa-3x text-primary mb-3"></i>
+                            <h3>已有账号？</h3>
+                            <p>登录继续使用</p>
+                            <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> 立即登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 功能特点 -->
+<div class="row mt-5">
+    <div class="col-12 text-center">
+        <h2 class="mb-4">功能特点</h2>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="text-center">
+            <i class="fas fa-users fa-3x text-primary mb-3"></i>
+            <h4>多人协作</h4>
+            <p>支持家庭成员共同记账，实时同步数据</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="text-center">
+            <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+            <h4>数据分析</h4>
+            <p>直观的图表展示，帮助您了解消费习惯</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="text-center">
+            <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+            <h4>安全可靠</h4>
+            <p>数据安全存储，保护您的隐私</p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

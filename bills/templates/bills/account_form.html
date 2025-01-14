@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}编辑账本{% else %}新建账本{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{% if form.instance.pk %}编辑账本{% else %}新建账本{% endif %}</h1>
+                <a href="{% url 'bills:account-list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>
+            
+            <form method="post" class="card">
+                {% csrf_token %}
+                <div class="card-body">
+                    {{ form|crispy }}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存账本
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 美化表单样式 */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取账本类型选择器和家庭字段
+    const typeSelect = document.querySelector('#id_type');
+    const familyFieldWrapper = document.querySelector('#div_id_family');
+    
+    // 更新家庭选择字段的显示状态
+    function updateFamilyField() {
+        const selectedType = typeSelect.value;
+        if (selectedType === 'family') {
+            familyFieldWrapper.style.display = 'block';
+            document.querySelector('#id_family').required = true;
+        } else {
+            familyFieldWrapper.style.display = 'none';
+            document.querySelector('#id_family').required = false;
+            document.querySelector('#id_family').value = '';
+        }
+    }
+    
+    // 初始化显示状态
+    updateFamilyField();
+    
+    // 监听类型变化
+    typeSelect.addEventListener('change', updateFamilyField);
+});
+</script>
+{% endblock %} 

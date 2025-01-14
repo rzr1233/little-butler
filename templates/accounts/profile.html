@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}个人中心 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 左侧用户信息 -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user"></i> 用户信息
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="用户头像" 
+                         class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto mb-3"
+                         style="width: 150px; height: 150px;">
+                        <i class="fas fa-user fa-4x"></i>
+                    </div>
+                {% endif %}
+                <h5 class="card-title">{{ user.profile.nickname|default:user.username }}</h5>
+                <p class="text-muted">{{ user.email }}</p>
+                {% if user.profile.bio %}
+                    <p class="card-text">{{ user.profile.bio }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <small class="text-muted">
+                    注册时间：{{ user.date_joined|date:"Y-m-d" }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧编辑表单 -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> 编辑资料
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存修改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 密码修改链接 -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-primary d-block">
+                    <i class="fas fa-key"></i> 修改密码
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
