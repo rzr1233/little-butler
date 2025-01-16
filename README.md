@@ -127,6 +127,35 @@
   python manage.py loaddata backup.json
   ```
 
+### Git连接问题解决
+如果遇到SSL连接问题或无法推送代码，建议切换到SSH方式：
+
+1. 检查SSH密钥：
+   ```bash
+   ls ~/.ssh
+   ```
+
+2. 如果没有SSH密钥，生成新的：
+   ```bash
+   ssh-keygen -t ed25519 -C "你的邮箱"
+   ```
+
+3. 将公钥添加到GitHub：
+   - 复制公钥内容：`cat ~/.ssh/id_rsa.pub`
+   - GitHub.com -> Settings -> SSH and GPG keys
+   - 点击 "New SSH key" 并粘贴公钥
+
+4. 更改仓库为SSH方式：
+   ```bash
+   git remote set-url origin git@github.com:rzr1233/little-butler.git
+   ```
+
+5. 测试SSH连接：
+   ```bash
+   ssh -T git@github.com
+   ```
+   看到"successfully authenticated"信息即表示成功
+
 ## 作者
 
 清香客
