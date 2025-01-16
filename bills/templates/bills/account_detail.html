@@ -37,7 +37,7 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">总收入</h6>
-                            <h3 class="card-title text-success mb-0">{{ total_income }}</h3>
+                            <h3 class="card-title text-success mb-0">{{ total_income|floatformat:2 }}</h3>
                         </div>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">总支出</h6>
-                            <h3 class="card-title text-danger mb-0">{{ total_expense }}</h3>
+                            <h3 class="card-title text-danger mb-0">{{ total_expense|floatformat:2 }}</h3>
                         </div>
                     </div>
                 </div>
@@ -54,7 +54,7 @@
                         <div class="card-body">
                             <h6 class="card-subtitle mb-2 text-muted">结余</h6>
                             <h3 class="card-title {% if balance >= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
-                                {{ balance }}
+                                {{ balance|floatformat:2 }}
                             </h3>
                         </div>
                     </div>
@@ -63,12 +63,42 @@
 
             <div class="card">
                 <div class="card-header bg-transparent">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">最近账单</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">账单记录</h5>
                         <a href="{% url 'bills:bill-create' account.pk %}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus"></i> 记一笔
                         </a>
                     </div>
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            {{ search_form.start_date.label_tag }}
+                            {{ search_form.start_date }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ search_form.end_date.label_tag }}
+                            {{ search_form.end_date }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.type.label_tag }}
+                            {{ search_form.type }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.category.label_tag }}
+                            {{ search_form.category }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.keyword.label_tag }}
+                            {{ search_form.keyword }}
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> 搜索
+                            </button>
+                            <a href="{% url 'bills:account-detail' account.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo"></i> 重置
+                            </a>
+                        </div>
+                    </form>
                 </div>
                 <div class="list-group list-group-flush">
                     {% for bill in recent_bills %}
@@ -86,7 +116,7 @@
                             </div>
                             <div class="text-end">
                                 <div class="{% if bill.type == 'income' %}text-success{% else %}text-danger{% endif %} mb-1">
-                                    {{ bill.type|yesno:"+,-" }}{{ bill.amount }}
+                                    {{ bill.type|yesno:"+,-" }}{{ bill.amount|floatformat:2 }}
                                 </div>
                                 <div class="btn-group btn-group-sm">
                                     <a href="{% url 'bills:bill-update' bill.pk %}" class="btn btn-outline-secondary btn-sm">
@@ -106,6 +136,41 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% if recent_bills.paginator %}
+                <div class="card-footer bg-transparent">
+                    <nav aria-label="账单分页">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if recent_bills.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ recent_bills.previous_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.keyword %}&keyword={{ request.GET.keyword }}{% endif %}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in recent_bills.paginator.page_range %}
+                                {% if num == recent_bills.number %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > recent_bills.number|add:'-3' and num < recent_bills.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.keyword %}&keyword={{ request.GET.keyword }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if recent_bills.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ recent_bills.next_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.keyword %}&keyword={{ request.GET.keyword }}{% endif %}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

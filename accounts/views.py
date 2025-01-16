@@ -9,6 +9,13 @@ from django.contrib.auth.models import User
 from .models import UserProfile, Family, FamilyMember
 from .forms import UserRegisterForm, UserProfileForm, FamilyForm
 from django.db import transaction
+from django.contrib.auth.views import PasswordResetView
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
 
 
 @transaction.atomic
@@ -101,3 +108,70 @@ def family_detail_view(request, pk):
     return render(
         request, "accounts/family_detail.html", {"family": family, "is_admin": is_admin}
     )
+
+
+class CustomPasswordResetView(PasswordResetView):
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        """
+        重写发送邮件方法，确保每个邮箱只发送一次邮件
+        """
+        # 获取邮件主题
+        subject = render_to_string(subject_template_name, context)
+        subject = "".join(subject.splitlines())
+
+        # 获取邮件内容
+        body = render_to_string(email_template_name, context)
+
+        # 直接使用Django的send_mail函数发送邮件
+        send_mail(
+            subject,
+            body,
+            from_email,
+            [to_email],
+            fail_silently=False,
+        )
+
+    def form_valid(self, form):
+        """
+        重写form_valid方法，使用自定义的发送邮件方法
+        """
+        email = form.cleaned_data["email"]
+        # 获取第一个匹配的活跃用户
+        active_user = User.objects.filter(email=email, is_active=True).first()
+
+        if active_user:
+            # 生成密码重置token
+            token = default_token_generator.make_token(active_user)
+            uid = urlsafe_base64_encode(force_bytes(active_user.pk))
+
+            # 准备上下文
+            context = {
+                "email": email,
+                "domain": self.request.get_host(),
+                "site_name": "记账软件",
+                "uid": uid,
+                "token": token,
+                "protocol": "https" if self.request.is_secure() else "http",
+                "user": active_user,
+            }
+
+            # 发送邮件
+            self.send_mail(
+                self.subject_template_name,
+                self.email_template_name,
+                context,
+                settings.DEFAULT_FROM_EMAIL,
+                email,
+                self.html_email_template_name,
+            )
+
+        # 无论邮箱是否存在，都重定向到成功页面（防止邮箱枚举攻击）
+        return redirect(self.get_success_url())

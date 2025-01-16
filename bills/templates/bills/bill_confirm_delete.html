@@ -17,7 +17,7 @@
                         <p class="mb-1">你确定要删除以下账单吗？</p>
                         <ul class="list-unstyled">
                             <li><strong>类型：</strong>{{ object.get_type_display }}</li>
-                            <li><strong>金额：</strong>{{ object.amount }}</li>
+                            <li><strong>金额：</strong>{{ object.amount|floatformat:2 }}</li>
                             <li><strong>分类：</strong>{{ object.category.name }}</li>
                             <li><strong>日期：</strong>{{ object.date|date:"SHORT_DATETIME_FORMAT" }}</li>
                             <li><strong>备注：</strong>{{ object.description|default:"无" }}</li>

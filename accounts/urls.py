@@ -35,4 +35,41 @@ urlpatterns = [
     path("family/create/", views.FamilyCreateView.as_view(), name="family-create"),
     path("family/list/", views.FamilyListView.as_view(), name="family-list"),
     path("family/<int:pk>/", views.family_detail_view, name="family-detail"),
+    # 密码重置相关URL
+    path(
+        "password_reset/",
+        views.CustomPasswordResetView.as_view(
+            template_name="accounts/password_reset.html",
+            email_template_name="accounts/password_reset_email.html",
+            subject_template_name="accounts/password_reset_subject.txt",
+            success_url="/accounts/password_reset/done/",
+            from_email=None,  # 使用settings.py中的DEFAULT_FROM_EMAIL
+            html_email_template_name=None,  # 禁用HTML邮件
+            extra_email_context={"site_name": "记账软件"},  # 添加额外的上下文
+            extra_context={"title": "重置密码"},  # 添加页面标题
+        ),
+        name="password_reset",
+    ),
+    path(
+        "password_reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="accounts/password_reset_done.html"
+        ),
+        name="password_reset_done",
+    ),
+    path(
+        "reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="accounts/password_reset_confirm.html",
+            success_url="/accounts/reset/done/",
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="accounts/password_reset_complete.html"
+        ),
+        name="password_reset_complete",
+    ),
 ]

@@ -2,6 +2,7 @@ from django import forms
 from .models import Account, Category, Bill, Budget
 from django.utils import timezone
 from django.db.models import Q
+from datetime import datetime, timedelta
 
 
 class AccountForm(forms.ModelForm):
@@ -177,3 +178,72 @@ class BillForm(forms.ModelForm):
         if not date:
             raise forms.ValidationError("请选择或输入有效的日期和时间")
         return date
+
+
+class BillSearchForm(forms.Form):
+    """账单查询表单"""
+
+    start_date = forms.DateField(
+        label="开始日期",
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+            }
+        ),
+    )
+
+    end_date = forms.DateField(
+        label="结束日期",
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+            }
+        ),
+    )
+
+    type = forms.ChoiceField(
+        label="类型",
+        choices=[("", "全部")] + Bill.TYPE_CHOICES,
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+            }
+        ),
+    )
+
+    category = forms.CharField(
+        label="分类",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "输入分类名称",
+            }
+        ),
+    )
+
+    keyword = forms.CharField(
+        label="关键词",
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "搜索备注信息",
+            }
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError("开始日期不能大于结束日期")
+
+        return cleaned_data

@@ -11,10 +11,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,12 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-your-secret-key")
+SECRET_KEY = "django-insecure-a&i6-ny-gfgo78#aup4pylgul3sabhm!c^6ykpk)_vizgtl027"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -61,7 +57,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # 添加 whitenoise
 ]
 
 ROOT_URLCONF = "bookkeeping.urls"
@@ -141,12 +136,10 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # 媒体文件设置
 MEDIA_URL = "media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Crispy Forms设置
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -170,16 +163,27 @@ CORS_ALLOW_CREDENTIALS = True
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
+# 邮件发送配置
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # 使用SMTP发送邮件
+EMAIL_HOST = "smtp.189.cn"  # 189邮箱的SMTP服务器
+EMAIL_PORT = 465  # 使用SSL加密的端口
+EMAIL_USE_SSL = True  # 使用SSL加密
+EMAIL_HOST_USER = "18932667011@189.cn"  # 发件人邮箱
+EMAIL_HOST_PASSWORD = "Ce@3Kj%5i%7Ai$0S"  # 邮箱授权码
+DEFAULT_FROM_EMAIL = "记账软件 <18932667011@189.cn>"  # 默认发件人
+EMAIL_USE_LOCALTIME = True  # 使用本地时间
+EMAIL_TIMEOUT = 5  # 设置超时时间为5秒
+EMAIL_SUBJECT_PREFIX = "[记账软件] "  # 邮件主题前缀
+
+# 开发环境下不再输出到控制台
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+# 密码重置设置
+PASSWORD_RESET_TIMEOUT = 3600  # 密码重置链接有效期（秒）
+PASSWORD_RESET_TIMEOUT_DAYS = None  # 使用秒为单位的超时设置
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Security settings
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = "DENY"

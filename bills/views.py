@@ -14,8 +14,11 @@ from django.db.models import Q, Sum
 from django.http import JsonResponse, Http404
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import Account, Category, Bill, Budget
-from .forms import AccountForm, BillForm
+from .forms import AccountForm, BillForm, BillSearchForm
 import json
+from decimal import Decimal
+from django.core.paginator import Paginator
+from datetime import datetime, timedelta
 
 
 class AccountListView(LoginRequiredMixin, ListView):
@@ -133,6 +136,7 @@ class AccountDetailView(LoginRequiredMixin, DetailView):
     model = Account
     template_name = "bills/account_detail.html"
     context_object_name = "account"
+    paginate_by = 20  # 每页显示20条账单
 
     def get_queryset(self):
         # 用户可以查看自己的账本和共享的家庭账本
@@ -144,16 +148,58 @@ class AccountDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         account = self.object
 
-        # 添加账本统计信息
+        # 处理搜索表单
+        form = BillSearchForm(self.request.GET)
+        context["search_form"] = form
+
+        # 获取账单查询集
         bills = account.bills.select_related("category", "created_by")
-        context["total_income"] = (
-            bills.filter(type="income").aggregate(Sum("amount"))["amount__sum"] or 0
+
+        # 如果表单有效，应用过滤条件
+        if form.is_valid():
+            # 日期过滤
+            start_date = form.cleaned_data.get("start_date")
+            end_date = form.cleaned_data.get("end_date")
+            if start_date:
+                bills = bills.filter(date__date__gte=start_date)
+            if end_date:
+                bills = bills.filter(date__date__lte=end_date)
+
+            # 类型过滤
+            bill_type = form.cleaned_data.get("type")
+            if bill_type:
+                bills = bills.filter(type=bill_type)
+
+            # 分类过滤
+            category = form.cleaned_data.get("category")
+            if category:
+                bills = bills.filter(category__name__icontains=category)
+
+            # 关键词过滤
+            keyword = form.cleaned_data.get("keyword")
+            if keyword:
+                bills = bills.filter(description__icontains=keyword)
+
+        # 计算统计信息（基于过滤后的查询集）
+        context["total_income"] = round(
+            bills.filter(type="income").aggregate(Sum("amount"))["amount__sum"]
+            or Decimal("0"),
+            2,
         )
-        context["total_expense"] = (
-            bills.filter(type="expense").aggregate(Sum("amount"))["amount__sum"] or 0
+        context["total_expense"] = round(
+            bills.filter(type="expense").aggregate(Sum("amount"))["amount__sum"]
+            or Decimal("0"),
+            2,
         )
-        context["balance"] = context["total_income"] - context["total_expense"]
-        context["recent_bills"] = bills.order_by("-date")[:5]
+        context["balance"] = round(
+            context["total_income"] - context["total_expense"], 2
+        )
+
+        # 分页处理
+        bills_list = bills.order_by("-date")
+        paginator = Paginator(bills_list, self.paginate_by)
+        page = self.request.GET.get("page", 1)
+        context["recent_bills"] = paginator.get_page(page)
 
         # 检查用户权限
         context["is_owner"] = account.owner == self.request.user
