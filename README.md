@@ -60,6 +60,68 @@
 - 数据库：SQLite
 - 图标：Font Awesome 5
 
+## 部署说明
+
+### PythonAnywhere部署
+1. 在PythonAnywhere创建Web应用
+2. 克隆代码仓库：
+   ```bash
+   git clone https://github.com/rzr1233/little-butler.git
+   ```
+3. 安装依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. 配置Web应用：
+   - 设置Python版本为3.8或更高
+   - 配置虚拟环境
+   - 设置WSGI配置文件
+   - 配置静态文件路径
+
+### 代码更新步骤
+1. 进入项目目录：
+   ```bash
+   cd little-butler
+   ```
+2. 拉取最新代码：
+   ```bash
+   git pull origin master
+   ```
+   如遇冲突，可重置：
+   ```bash
+   git reset --hard
+   git pull origin master
+   ```
+3. 安装新依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. 数据库迁移：
+   ```bash
+   # 可选：备份数据
+   python manage.py dumpdata > backup.json
+   # 执行迁移
+   python manage.py migrate
+   ```
+5. 收集静态文件（如有更新）：
+   ```bash
+   python manage.py collectstatic
+   ```
+6. 重新加载web应用：
+   ```bash
+   touch /var/www/rzr1233_pythonanywhere_com_wsgi.py
+   ```
+
+### 故障排除
+- 检查错误日志
+- 确保所有依赖正确安装
+- 确保数据库迁移成功
+- 如需回滚：
+  ```bash
+  git checkout <之前的commit号>
+  python manage.py loaddata backup.json
+  ```
+
 ## 作者
 
 清香客
