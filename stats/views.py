@@ -11,6 +11,11 @@ from datetime import datetime, timedelta
 import json
 
 
+def format_month_to_chinese(date):
+    """将日期格式化为中文月份"""
+    return f"{date.year}年{date.month}月"
+
+
 class StatsHomeView(LoginRequiredMixin, TemplateView):
     """统计分析首页"""
 
@@ -20,6 +25,7 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         account_id = self.kwargs.get("account_id")
         account = Account.objects.get(id=account_id)
+        context["account"] = account
 
         # 获取账单数据
         bills = Bill.objects.filter(account=account)
@@ -57,14 +63,18 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
         if df.empty:
             return None
 
+        # 将月份转换为中文格式
+        df["month_label"] = df["month"].apply(format_month_to_chinese)
+
         # 数据透视
         df_pivot = df.pivot(index="month", columns="type", values="total").fillna(0)
+        month_labels = df["month_label"].unique()
 
         # 创建图表
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
-                x=df_pivot.index,
+                x=month_labels,
                 y=df_pivot["income"],
                 name="收入",
                 line=dict(color="#28a745"),
@@ -72,7 +82,7 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
         )
         fig.add_trace(
             go.Scatter(
-                x=df_pivot.index,
+                x=month_labels,
                 y=df_pivot["expense"],
                 name="支出",
                 line=dict(color="#dc3545"),
@@ -86,9 +96,15 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
             yaxis_title="金额",
             template="plotly_white",
             height=400,
+            xaxis=dict(tickangle=45),  # 倾斜x轴标签以防重叠
+            margin=dict(t=50, b=50, l=50, r=50),  # 调整边距
         )
 
-        return fig.to_html(full_html=False, include_plotlyjs=True)
+        return fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,  # 不包含 Plotly.js，因为我们在模板中已经加载了
+            config={"displayModeBar": False},
+        )
 
     def generate_category_chart(self, bills):
         """生成分类占比图"""
@@ -106,12 +122,26 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
             return None
 
         # 创建饼图
-        fig = px.pie(df, values="total", names="category__name", title="支出分类占比")
+        fig = px.pie(
+            df,
+            values="total",
+            names="category__name",
+            title="支出分类占比",
+            labels={"category__name": "分类", "total": "金额"},
+        )
 
         # 更新布局
-        fig.update_layout(height=400, showlegend=True)
+        fig.update_layout(
+            height=400,
+            showlegend=True,
+            margin=dict(t=50, b=50, l=50, r=50),  # 调整边距
+        )
 
-        return fig.to_html(full_html=False, include_plotlyjs=False)
+        return fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,  # 不包含 Plotly.js，因为我们在模板中已经加载了
+            config={"displayModeBar": False},
+        )
 
     def get_monthly_stats(self, bills):
         """获取月度统计数据"""

@@ -1,7 +1,17 @@
 {% extends "base.html" %}
 {% load static %}
+{% load stats_extras %}
 
 {% block title %}统计分析 - {{ account.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        width: 100%;
+        min-height: 400px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -24,7 +34,7 @@
                                     {% with income_change=monthly_stats.current.income|subtract:monthly_stats.last.income %}
                                     <div class="small {% if income_change >= 0 %}text-success{% else %}text-danger{% endif %}">
                                         <i class="fas {% if income_change >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
-                                        {{ income_change|abs|floatformat:2 }}
+                                        {{ income_change|abs_value|floatformat:2 }}
                                     </div>
                                     {% endwith %}
                                 </div>
@@ -34,7 +44,7 @@
                                     {% with expense_change=monthly_stats.current.expense|subtract:monthly_stats.last.expense %}
                                     <div class="small {% if expense_change <= 0 %}text-success{% else %}text-danger{% endif %}">
                                         <i class="fas {% if expense_change <= 0 %}fa-arrow-down{% else %}fa-arrow-up{% endif %}"></i>
-                                        {{ expense_change|abs|floatformat:2 }}
+                                        {{ expense_change|abs_value|floatformat:2 }}
                                     </div>
                                     {% endwith %}
                                 </div>
@@ -70,28 +80,32 @@
             <!-- 趋势图 -->
             <div class="card mb-4">
                 <div class="card-body">
-                    {% if trend_chart %}
-                        {{ trend_chart|safe }}
-                    {% else %}
-                        <div class="text-center py-5">
-                            <img src="{% static 'images/empty.svg' %}" alt="没有数据" class="img-fluid mb-3" style="max-width: 200px;">
-                            <p class="text-muted">暂无收支趋势数据</p>
-                        </div>
-                    {% endif %}
+                    <div class="chart-container">
+                        {% if trend_chart %}
+                            {{ trend_chart|safe }}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <img src="{% static 'images/empty.svg' %}" alt="没有数据" class="img-fluid mb-3" style="max-width: 200px;">
+                                <p class="text-muted">暂无收支趋势数据</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
             <!-- 分类占比 -->
             <div class="card">
                 <div class="card-body">
-                    {% if category_chart %}
-                        {{ category_chart|safe }}
-                    {% else %}
-                        <div class="text-center py-5">
-                            <img src="{% static 'images/empty.svg' %}" alt="没有数据" class="img-fluid mb-3" style="max-width: 200px;">
-                            <p class="text-muted">暂无分类统计数据</p>
-                        </div>
-                    {% endif %}
+                    <div class="chart-container">
+                        {% if category_chart %}
+                            {{ category_chart|safe }}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <img src="{% static 'images/empty.svg' %}" alt="没有数据" class="img-fluid mb-3" style="max-width: 200px;">
+                                <p class="text-muted">暂无分类统计数据</p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -100,5 +114,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- 先加载 Plotly.js -->
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 {% endblock %} 
