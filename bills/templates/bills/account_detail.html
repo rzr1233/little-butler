@@ -29,6 +29,9 @@
                         <i class="fas fa-trash-alt"></i> 删除账本
                     </a>
                     {% endif %}
+                    <a href="{% url 'stats:home' account.pk %}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-line"></i> 统计分析
+                    </a>
                 </div>
             </div>
 
