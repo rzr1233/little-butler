@@ -100,22 +100,77 @@
 
 ### PythonAnywhere部署
 1. 在PythonAnywhere创建Web应用
-2. 克隆代码仓库：
+
+2. 配置 Gitee SSH 访问：
    ```bash
-   # 使用 GitHub
-   git clone https://github.com/rzr1233/little-butler.git
-   # 或使用 Gitee（推荐国内用户使用）
-   git clone https://gitee.com/你的用户名/项目名称.git
+   # 1. 生成 SSH 密钥
+   ssh-keygen -t ed25519 -C "你的邮箱"
+   
+   # 2. 查看并复制公钥
+   cat ~/.ssh/id_ed25519.pub
    ```
-3. 安装依赖：
+   
+   将公钥添加到 Gitee：
+   - 访问 Gitee.com -> 设置 -> SSH公钥
+   - 点击"添加公钥"，粘贴公钥内容
+   
+   测试连接：
    ```bash
+   ssh -T git@gitee.com
+   ```
+
+3. 克隆代码仓库：
+   ```bash
+   # 使用 SSH 方式克隆
+   git clone git@gitee.com:zyn1233/little-butler.git
+   ```
+
+4. 进入项目目录：
+   ```bash
+   cd little-butler
+   ```
+
+5. 创建并配置虚拟环境：
+   ```bash
+   # 创建虚拟环境
+   python -m venv venv
+   
+   # 激活虚拟环境
+   source venv/bin/activate
+   
+   # 安装依赖
    pip install -r requirements.txt
    ```
-4. 配置Web应用：
-   - 设置Python版本为3.8或更高
-   - 配置虚拟环境
-   - 设置WSGI配置文件
-   - 配置静态文件路径
+
+6. 配置Web应用：
+   - 打开 PythonAnywhere -> Web -> 你的应用
+   - 设置 Python 版本为 3.8 或更高
+   - 设置虚拟环境路径：/home/你的用户名/little-butler/venv
+   - 设置项目目录：/home/你的用户名/little-butler
+   - 配置 WSGI 文件路径
+   - 设置静态文件路径：/static/
+
+7. 更新代码：
+   ```bash
+   # 进入项目目录
+   cd little-butler
+   
+   # 拉取最新代码
+   git pull origin master
+   
+   # 安装新依赖（如果有）
+   source venv/bin/activate
+   pip install -r requirements.txt
+   
+   # 执行数据库迁移
+   python manage.py migrate
+   
+   # 收集静态文件
+   python manage.py collectstatic
+   
+   # 重新加载web应用
+   touch /var/www/zyn1233_pythonanywhere_com_wsgi.py
+   ```
 
 ### 代码更新步骤
 1. 进入项目目录：
