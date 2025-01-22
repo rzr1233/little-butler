@@ -19,4 +19,4 @@ django-debug-toolbar==4.2.0
 
 # 数据可视化
 plotly==5.18.0
-pandas==2.1.4 
+pandas==2.0.3 
