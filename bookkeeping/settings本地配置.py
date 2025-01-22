@@ -23,8 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-a&i6-ny-gfgo78#aup4pylgul3sabhm!c^6ykpk)_vizgtl027"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -90,14 +89,8 @@ WSGI_APPLICATION = "bookkeeping.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "zyn1233$default",
-        "USER": "zyn1233",
-        "PASSWORD": "zhanggwg1233",
-        "HOST": "zyn1233.mysql.pythonanywhere-services.com",
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
