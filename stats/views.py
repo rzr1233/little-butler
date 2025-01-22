@@ -75,35 +75,59 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
         fig.add_trace(
             go.Scatter(
                 x=month_labels,
-                y=df_pivot["income"],
+                y=df_pivot["income"] if "income" in df_pivot else [],
                 name="收入",
-                line=dict(color="#28a745"),
+                line=dict(color="#28a745", width=2),
+                mode="lines+markers",
             )
         )
         fig.add_trace(
             go.Scatter(
                 x=month_labels,
-                y=df_pivot["expense"],
+                y=df_pivot["expense"] if "expense" in df_pivot else [],
                 name="支出",
-                line=dict(color="#dc3545"),
+                line=dict(color="#dc3545", width=2),
+                mode="lines+markers",
             )
         )
 
         # 更新布局
         fig.update_layout(
-            title="月度收支趋势",
+            title=dict(
+                text="月度收支趋势",
+                font=dict(size=16),
+                x=0.5,
+            ),
             xaxis_title="月份",
-            yaxis_title="金额",
+            yaxis_title="金额（元）",
             template="plotly_white",
             height=400,
-            xaxis=dict(tickangle=45),  # 倾斜x轴标签以防重叠
-            margin=dict(t=50, b=50, l=50, r=50),  # 调整边距
+            xaxis=dict(
+                tickangle=45,
+                tickfont=dict(size=12),
+            ),
+            yaxis=dict(
+                tickformat=",.2f",
+                tickfont=dict(size=12),
+            ),
+            margin=dict(t=50, b=50, l=50, r=50),
+            hovermode="x unified",
+            showlegend=True,
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+            ),
         )
 
         return fig.to_html(
             full_html=False,
-            include_plotlyjs=False,  # 不包含 Plotly.js，因为我们在模板中已经加载了
-            config={"displayModeBar": False},
+            include_plotlyjs=False,
+            div_id="trend-chart",
+            config={
+                "displayModeBar": True,
+                "displaylogo": False,
+                "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+                "responsive": True,
+            },
         )
 
     def generate_category_chart(self, bills):
@@ -128,19 +152,41 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
             names="category__name",
             title="支出分类占比",
             labels={"category__name": "分类", "total": "金额"},
+            color_discrete_sequence=px.colors.qualitative.Set3,
         )
 
         # 更新布局
         fig.update_layout(
+            title=dict(
+                text="支出分类占比",
+                font=dict(size=16),
+                x=0.5,
+            ),
             height=400,
             showlegend=True,
-            margin=dict(t=50, b=50, l=50, r=50),  # 调整边距
+            legend=dict(
+                orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5
+            ),
+            margin=dict(t=50, b=100, l=50, r=50),
+        )
+
+        # 更新追踪
+        fig.update_traces(
+            textposition="inside",
+            textinfo="percent+label",
+            hovertemplate="%{label}<br>金额: ¥%{value:,.2f}<br>占比: %{percent}",
         )
 
         return fig.to_html(
             full_html=False,
-            include_plotlyjs=False,  # 不包含 Plotly.js，因为我们在模板中已经加载了
-            config={"displayModeBar": False},
+            include_plotlyjs=False,
+            div_id="category-chart",
+            config={
+                "displayModeBar": True,
+                "displaylogo": False,
+                "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+                "responsive": True,
+            },
         )
 
     def get_monthly_stats(self, bills):

@@ -15,9 +15,9 @@
   - [x] 收入支出记录
   - [x] 分类管理
   - [x] 账单搜索
-- [ ] 统计分析
-  - [x] 月度收支趋势图（待修复：图表显示问题）
-  - [x] 支出分类占比（待修复：图表显示问题）
+- [x] 统计分析
+  - [x] 月度收支趋势图
+  - [x] 支出分类占比
   - [x] 月度统计比较
   - [x] 年度汇总数据
 - [ ] 预算管理
@@ -26,12 +26,17 @@
   - [ ] 超支提醒
 
 ## 待修复问题
-1. 统计分析页面图表不显示
-   - 问题描述：趋势图和分类占比图无法正常显示
-   - 可能原因：Plotly.js加载顺序或配置问题
-   - 解决方向：检查JavaScript加载顺序，调整图表配置
+
 
 ## 版本历史
+
+### v2.2 (2024-01-22)
+- 修复统计分析功能
+  - 修复月度收支趋势图显示问题
+  - 修复支出分类占比图显示问题
+  - 优化图表样式和交互体验
+  - 添加图表自适应调整功能
+  - 改进数据展示格式
 
 ### v2.1 (2024-01-21)
 - 新增统计分析功能
@@ -84,66 +89,50 @@
 - Plotly.js (数据可视化)
 - SQLite3 (数据库)
 
-## 部署说明
-
-1. 安装依赖
-```bash
-pip install -r requirements.txt
+## 项目结构
+```
+项目根目录/
+├── README.md                # 项目文档
+├── requirements.txt         # 项目依赖
+├── manage.py               # Django管理脚本
+├── db.sqlite3              # 数据库文件
+├── .gitignore             # Git忽略配置
+├── bookkeeping/           # Django项目主配置目录
+│   ├── __init__.py
+│   ├── settings.py        # 项目设置
+│   ├── urls.py           # URL配置
+│   ├── asgi.py           # ASGI配置
+│   └── wsgi.py           # WSGI配置
+├── accounts/              # 用户账户应用
+│   ├── migrations/       # 数据库迁移文件
+│   ├── templates/       # 账户相关模板
+│   ├── models.py        # 用户模型
+│   └── views.py         # 账户视图
+├── bills/                # 账单应用
+│   ├── migrations/      # 数据库迁移文件
+│   ├── templates/      # 账单相关模板
+│   ├── models.py       # 账单模型
+│   └── views.py        # 账单视图
+├── stats/               # 统计分析应用
+│   ├── migrations/     # 数据库迁移文件
+│   ├── templates/     # 统计相关模板
+│   ├── models.py      # 统计模型
+│   └── views.py       # 统计视图
+├── scripts/            # 实用脚本目录
+│   └── create_test_data.py  # 测试数据生成脚本
+├── static/             # 静态文件目录
+│   ├── css/           # 样式文件
+│   ├── js/            # JavaScript文件
+│   └── images/        # 图片资源
+├── media/             # 用户上传文件目录
+└── templates/         # 全局模板目录
+    ├── base.html      # 基础模板
+    └── components/    # 组件模板
 ```
 
-2. 数据库迁移
-```bash
-python manage.py migrate
-```
-
-3. 创建超级用户
-```bash
-python manage.py createsuperuser
-```
-
-4. 运行开发服务器
-```bash
-python manage.py runserver
-```
-
-## Git连接问题解决
-
-如果遇到SSL证书问题，可以尝试以下方法：
-
-1. 关闭SSL验证：
-```bash
-git config --global http.sslVerify false
-```
-
-2. 使用SSH方式：
-   - 检查是否有SSH密钥：`ls ~/.ssh`
-   - 如果没有，生成新密钥：`ssh-keygen -t ed25519 -C "你的邮箱"`
-   - 将公钥添加到GitHub
-   - 修改仓库为SSH方式：`git remote set-url origin git@github.com:rzr1233/little-butler.git`
-   - 测试连接：`ssh -T git@github.com`
-
-## 数据库迁移方法
-
-### 方法一：直接复制数据库文件（推荐）
-1. 找到本地的 `db.sqlite3` 文件
-2. 上传到PythonAnywhere项目目录
-3. 重启web应用
-
-### 方法二：使用Django导入导出
-1. 导出数据：
-```bash
-python manage.py dumpdata --exclude auth.permission --exclude contenttypes > data.json
-```
-2. 上传data.json文件
-3. 导入数据：
-```bash
-python manage.py loaddata data.json
-```
-
-注意：如果遇到编码问题，请确保使用UTF-8编码保存文件。
 
 ## 作者
 清香客
 
 ## 许可
-MIT License 
+MIT License

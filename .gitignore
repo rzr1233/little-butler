@@ -25,7 +25,7 @@ var/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
+media
 
 # IDE
 .idea/
@@ -37,4 +37,8 @@ media/
 .env
 .venv
 venv/
-ENV/ 
+ENV/
+
+# Other
+.DS_Store
+Thumbs.db 

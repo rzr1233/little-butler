@@ -9,8 +9,11 @@
     .chart-container {
         width: 100%;
         min-height: 400px;
+        margin: 0 auto;
     }
 </style>
+<!-- 将Plotly.js移到头部加载 -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -114,6 +117,21 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- 先加载 Plotly.js -->
-<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>
+    // 确保图表正确调整大小
+    window.addEventListener('resize', function() {
+        Plotly.Plots.resize('trend-chart');
+        Plotly.Plots.resize('category-chart');
+    });
+
+    // 初始化图表
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('trend-chart')) {
+            Plotly.Plots.resize('trend-chart');
+        }
+        if (document.getElementById('category-chart')) {
+            Plotly.Plots.resize('category-chart');
+        }
+    });
+</script>
 {% endblock %} 
