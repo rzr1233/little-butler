@@ -39,8 +39,8 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ["nickname", "avatar", "bio"]
-        labels = {"nickname": "昵称", "avatar": "头像", "bio": "个人简介"}
+        fields = ["nickname", "bio"]
+        labels = {"nickname": "昵称", "bio": "个人简介"}
         widgets = {
             "bio": forms.Textarea(attrs={"rows": 4}),
         }

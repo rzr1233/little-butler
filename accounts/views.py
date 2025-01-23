@@ -46,7 +46,7 @@ def profile_view(request):
         )
 
     if request.method == "POST":
-        form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        form = UserProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "个人资料更新成功！")
