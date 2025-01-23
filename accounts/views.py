@@ -26,7 +26,9 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             # 创建用户档案
-            UserProfile.objects.create(user=user, nickname=user.username)
+            UserProfile.objects.create(
+                user=user, nickname=user.username, avatar=""  # 提供空字符串作为默认值
+            )
             messages.success(request, "注册成功！请登录。")
             return redirect("accounts:login")
     else:
