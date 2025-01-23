@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     # 自定义应用
-    "accounts",
+    "accounts.apps.AccountsConfig",
     "bills",
     "stats",
 ]
