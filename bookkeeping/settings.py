@@ -49,8 +49,8 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     # 自定义应用
     "accounts.apps.AccountsConfig",
-    "bills",
-    "stats",
+    "bills.apps.BillsConfig",
+    "stats.apps.StatsConfig",
 ]
 
 MIDDLEWARE = [

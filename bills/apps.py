@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class StatsConfig(AppConfig):
+class BillsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "stats"
-    verbose_name = "统计分析"
+    name = "bills"
+    verbose_name = "账单管理"
