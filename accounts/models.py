@@ -7,7 +7,7 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     nickname = models.CharField("昵称", max_length=50, blank=True)
-    avatar = models.ImageField("头像", upload_to="avatars/", blank=True)
+    avatar = models.CharField(max_length=255, blank=True, null=True)
     bio = models.TextField("个人简介", max_length=500, blank=True)
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
     updated_at = models.DateTimeField("更新时间", auto_now=True)
