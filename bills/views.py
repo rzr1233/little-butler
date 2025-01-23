@@ -140,9 +140,15 @@ class AccountDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         # 用户可以查看自己的账本和共享的家庭账本
-        return Account.objects.filter(
-            Q(owner=self.request.user) | Q(family__members=self.request.user)
-        ).select_related("owner", "family")
+        base_query = Account.objects.select_related("owner", "family")
+
+        # 获取用户所属的所有家庭ID
+        user_family_ids = self.request.user.families.values_list("id", flat=True)
+
+        return base_query.filter(
+            Q(owner=self.request.user)  # 用户自己的账本
+            | Q(type="family", family__id__in=user_family_ids)  # 用户所属家庭的账本
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -297,11 +303,22 @@ class AccountDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         try:
-            response = super().delete(request, *args, **kwargs)
+            self.object = self.get_object()
+            # 检查是否有关联的账单
+            if self.object.bills.exists():
+                messages.error(
+                    request, "无法删除账本：请先删除该账本下的所有账单记录。"
+                )
+                return redirect("bills:account-list")
+
+            # 如果没有关联账单，执行删除
+            success_url = self.get_success_url()
+            self.object.delete()
             messages.success(request, "账本删除成功！")
-            return response
+            return redirect(success_url)
+
         except Exception as e:
-            messages.error(request, f"删除账本失败：{str(e)}")
+            messages.error(request, f"删除账本时出错：{str(e)}")
             return redirect("bills:account-list")
 
 
