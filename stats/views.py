@@ -9,6 +9,15 @@ import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime, timedelta
 import json
+from django.contrib.auth.decorators import login_required
+
+try:
+    import plotly.express as px
+    import pandas as pd
+
+    PLOTTING_AVAILABLE = True
+except ImportError:
+    PLOTTING_AVAILABLE = False
 
 
 def format_month_to_chinese(date):
@@ -247,3 +256,16 @@ class StatsHomeView(LoginRequiredMixin, TemplateView):
         }
 
         return {"total": yearly_total, "monthly_avg": monthly_avg}
+
+
+@login_required
+def stats_view(request):
+    if not PLOTTING_AVAILABLE:
+        return render(
+            request,
+            "stats/stats.html",
+            {"error_message": "统计功能暂时不可用，请联系管理员。"},
+        )
+
+    # 原有的统计逻辑
+    # ... 其余代码保持不变 ...
