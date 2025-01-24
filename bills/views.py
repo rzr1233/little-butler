@@ -247,6 +247,9 @@ class AccountDeleteView(LoginRequiredMixin, DeleteView):
                 )
                 return redirect("bills:account-detail", pk=self.object.pk)
 
+            # 先删除关联的分类
+            self.object.categories.all().delete()
+
             # 如果没有关联账单，执行删除
             success_url = self.get_success_url()
             self.object.delete()
@@ -273,38 +276,35 @@ class BillCreateView(LoginRequiredMixin, CreateView):
         if not account_pk:
             raise Http404("未指定账本")
 
-        # 检查用户是否有权限访问该账本
-        account_query = Account.objects.filter(
-            Q(owner=self.request.user)  # 用户自己的账本
-            | Q(type="family", family__members=self.request.user)  # 用户所属家庭的账本
-        )
-        self.account = get_object_or_404(account_query, pk=account_pk)
+        try:
+            # 检查用户是否有权限访问该账本
+            self.account = Account.objects.get(pk=account_pk)
 
-        # 检查用户是否有权限创建账单
-        if self.account.type == "family":
-            if not self.account.family.familymember_set.filter(
-                user=self.request.user
-            ).exists():
-                raise Http404("你没有权限在此账本中创建账单")
+            # 检查权限
+            if self.account.type == "personal":
+                # 个人账本只能由所有者访问
+                if self.account.owner != self.request.user:
+                    raise Http404("你没有权限访问此账本")
+            else:
+                # 家庭账本需要检查用户是否是家庭成员
+                if not self.account.family.familymember_set.filter(
+                    user=self.request.user
+                ).exists():
+                    raise Http404("你不是此家庭账本的成员")
 
-        kwargs["account"] = self.account
+            kwargs["account"] = self.account
 
-        # 设置初始类型为支出
-        if not kwargs.get("data"):
-            kwargs["initial"] = {"type": "expense"}
+            # 设置初始类型为支出
+            if not kwargs.get("data"):
+                kwargs["initial"] = {"type": "expense"}
 
-        return kwargs
+            return kwargs
+        except Account.DoesNotExist:
+            raise Http404("账本不存在")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["account"] = self.account
-
-        # 将分类数据序列化为JSON
-        if hasattr(context["form"], "all_categories"):
-            context["form"].all_categories = {
-                type_name: json.dumps(categories, cls=DjangoJSONEncoder)
-                for type_name, categories in context["form"].all_categories.items()
-            }
         return context
 
     def form_valid(self, form):
@@ -384,16 +384,28 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
     template_name = "bills/bill_confirm_delete.html"
 
     def get_queryset(self):
-        # 用户可以删除自己创建的账单，或者是自己所在家庭账本的账单
-        return Bill.objects.filter(
-            Q(created_by=self.request.user)
-            | Q(account__family__members=self.request.user)
+        # 获取基础查询集
+        base_queryset = Bill.objects.select_related("account", "account__family")
+
+        # 用户可以删除：
+        # 1. 自己创建的账单
+        # 2. 自己所在家庭账本的账单（需要是家庭成员）
+        return base_queryset.filter(
+            Q(created_by=self.request.user)  # 自己创建的账单
+            | Q(  # 家庭账本的账单（需要是家庭成员）
+                account__type="family",
+                account__family__familymember_set__user=self.request.user,
+            )
         )
 
     def get_success_url(self):
         return reverse_lazy("bills:account-detail", args=[self.object.account.pk])
 
     def delete(self, request, *args, **kwargs):
-        response = super().delete(request, *args, **kwargs)
-        messages.success(request, "账单删除成功！")
-        return response
+        try:
+            response = super().delete(request, *args, **kwargs)
+            messages.success(request, "账单删除成功！")
+            return response
+        except Exception as e:
+            messages.error(request, f"删除账单时出错：{str(e)}")
+            return redirect("bills:account-detail", pk=self.get_object().account.pk)
