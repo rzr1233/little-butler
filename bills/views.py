@@ -380,7 +380,7 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         """获取可删除的账单查询集"""
-        return Bill.objects.select_related("account", "category", "created_by").filter(
+        return Bill.objects.select_related("account").filter(
             Q(created_by=self.request.user)  # 自己创建的账单
             | Q(  # 家庭账本的账单
                 account__type="family", account__family__members=self.request.user
@@ -398,14 +398,8 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
             # 保存账本ID用于重定向
             account_id = bill.account.id
 
-            # 在事务中执行删除
-            with transaction.atomic():
-                # 先将受保护的外键设为空
-                bill.category = None
-                bill.created_by = None
-                bill.save()
-                # 然后删除账单
-                bill.delete()
+            # 直接删除账单
+            bill.delete()
 
             messages.success(request, "账单删除成功！")
             return redirect("bills:account-detail", pk=account_id)
@@ -418,4 +412,9 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
             return redirect("bills:account-list")
         except Exception as e:
             messages.error(request, f"删除账单时出错：{str(e)}")
+            try:
+                if "account_id" in locals():
+                    return redirect("bills:account-detail", pk=account_id)
+            except:
+                pass
             return redirect("bills:account-list")
