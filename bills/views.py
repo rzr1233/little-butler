@@ -223,6 +223,41 @@ class AccountDetailView(LoginRequiredMixin, DetailView):
         return redirect("bills:account-list")
 
 
+class AccountDeleteView(LoginRequiredMixin, DeleteView):
+    """删除账本视图"""
+
+    model = Account
+    success_url = reverse_lazy("bills:account-list")
+    template_name = "bills/account_confirm_delete.html"
+
+    def get_queryset(self):
+        # 只能删除自己创建的账本
+        return Account.objects.filter(owner=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+
+            # 检查是否有关联的账单
+            bills_count = self.object.bills.count()
+            if bills_count > 0:
+                messages.error(
+                    request,
+                    f"无法删除账本：该账本下还有 {bills_count} 条账单记录，请先删除这些账单。",
+                )
+                return redirect("bills:account-detail", pk=self.object.pk)
+
+            # 如果没有关联账单，执行删除
+            success_url = self.get_success_url()
+            self.object.delete()
+            messages.success(request, "账本删除成功！")
+            return redirect(success_url)
+
+        except Exception as e:
+            messages.error(request, f"删除账本时出错：{str(e)}")
+            return redirect("bills:account-list")
+
+
 class BillCreateView(LoginRequiredMixin, CreateView):
     """创建账单视图"""
 
@@ -232,16 +267,30 @@ class BillCreateView(LoginRequiredMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        self.account = get_object_or_404(
-            Account.objects.filter(
-                Q(owner=self.request.user) | Q(family__members=self.request.user)
-            ),
-            pk=self.kwargs["account_pk"],
+
+        # 获取账本并检查权限
+        account_pk = self.kwargs.get("account_pk")
+        if not account_pk:
+            raise Http404("未指定账本")
+
+        # 检查用户是否有权限访问该账本
+        account_query = Account.objects.filter(
+            Q(owner=self.request.user)  # 用户自己的账本
+            | Q(type="family", family__members=self.request.user)  # 用户所属家庭的账本
         )
+        self.account = get_object_or_404(account_query, pk=account_pk)
+
+        # 检查用户是否有权限创建账单
+        if self.account.type == "family":
+            if not self.account.family.familymember_set.filter(
+                user=self.request.user
+            ).exists():
+                raise Http404("你没有权限在此账本中创建账单")
+
         kwargs["account"] = self.account
 
         # 设置初始类型为支出
-        if not kwargs.get("data"):  # 只在GET请求时设置初始值
+        if not kwargs.get("data"):
             kwargs["initial"] = {"type": "expense"}
 
         return kwargs
@@ -256,7 +305,6 @@ class BillCreateView(LoginRequiredMixin, CreateView):
                 type_name: json.dumps(categories, cls=DjangoJSONEncoder)
                 for type_name, categories in context["form"].all_categories.items()
             }
-
         return context
 
     def form_valid(self, form):
@@ -288,38 +336,6 @@ def get_account_categories(request, account_pk):
     )
 
     return JsonResponse(list(categories), safe=False)
-
-
-class AccountDeleteView(LoginRequiredMixin, DeleteView):
-    """删除账本视图"""
-
-    model = Account
-    success_url = reverse_lazy("bills:account-list")
-    template_name = "bills/account_confirm_delete.html"
-
-    def get_queryset(self):
-        # 只能删除自己创建的账本
-        return Account.objects.filter(owner=self.request.user)
-
-    def delete(self, request, *args, **kwargs):
-        try:
-            self.object = self.get_object()
-            # 检查是否有关联的账单
-            if self.object.bills.exists():
-                messages.error(
-                    request, "无法删除账本：请先删除该账本下的所有账单记录。"
-                )
-                return redirect("bills:account-list")
-
-            # 如果没有关联账单，执行删除
-            success_url = self.get_success_url()
-            self.object.delete()
-            messages.success(request, "账本删除成功！")
-            return redirect(success_url)
-
-        except Exception as e:
-            messages.error(request, f"删除账本时出错：{str(e)}")
-            return redirect("bills:account-list")
 
 
 class BillUpdateView(LoginRequiredMixin, UpdateView):
