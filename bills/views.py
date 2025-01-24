@@ -19,6 +19,8 @@ import json
 from decimal import Decimal
 from django.core.paginator import Paginator
 from datetime import datetime, timedelta
+from django.db import transaction
+from django.core.exceptions import PermissionDenied
 
 
 class AccountListView(LoginRequiredMixin, ListView):
@@ -234,41 +236,37 @@ class AccountDeleteView(LoginRequiredMixin, DeleteView):
         # 只能删除自己创建的账本
         return Account.objects.filter(owner=self.request.user)
 
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
-            self.object = self.get_object()
+            return self.delete(request, *args, **kwargs)
+        except PermissionDenied:
+            messages.error(request, "你没有权限删除此账本")
+            return redirect("bills:account-list")
+        except Exception as e:
+            messages.error(request, f"删除账本时出错：{str(e)}")
+            return redirect("bills:account-list")
 
-            # 检查是否有关联的账单，并尝试删除
-            bills_count = self.object.bills.count()
-            if bills_count > 0:
-                try:
-                    # 先删除所有关联的账单
-                    self.object.bills.all().delete()
-                except Exception as e:
-                    messages.error(
-                        request,
-                        f"删除账单记录时出错：{str(e)}",
-                    )
-                    return redirect("bills:account-detail", pk=self.object.pk)
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object:
+            messages.error(request, "找不到要删除的账本")
+            return redirect("bills:account-list")
 
-            # 删除关联的分类
-            try:
+        try:
+            with transaction.atomic():
+                # 先删除所有关联的账单
+                self.object.bills.all().delete()
+                # 删除关联的分类
                 self.object.categories.all().delete()
-            except Exception as e:
-                messages.error(
-                    request,
-                    f"删除分类时出错：{str(e)}",
-                )
-                return redirect("bills:account-detail", pk=self.object.pk)
+                # 最后删除账本
+                self.object.delete()
 
-            # 最后删除账本
-            self.object.delete()
             messages.success(request, "账本删除成功！")
             return redirect(self.success_url)
 
         except Exception as e:
             messages.error(request, f"删除账本时出错：{str(e)}")
-            return redirect("bills:account-list")
+            return redirect("bills:account-detail", pk=self.object.pk)
 
 
 class BillCreateView(LoginRequiredMixin, CreateView):
@@ -410,40 +408,30 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
             )
         )
 
-    def get_object(self, queryset=None):
+    def post(self, request, *args, **kwargs):
         try:
-            obj = super().get_object(queryset)
-            # 保存账本ID，以防删除后需要重定向
-            self.account_id = obj.account.id
-            return obj
-        except Http404:
-            messages.error(self.request, "找不到要删除的账单或没有删除权限")
-            return None
+            return self.delete(request, *args, **kwargs)
+        except PermissionDenied:
+            messages.error(request, "你没有权限删除此账单")
+            return redirect("bills:account-list")
         except Exception as e:
-            messages.error(self.request, f"获取账单时出错：{str(e)}")
-            return None
+            messages.error(request, f"删除账单时出错：{str(e)}")
+            return redirect("bills:account-list")
 
     def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object:
+            messages.error(request, "找不到要删除的账单")
+            return redirect("bills:account-list")
+
+        account_id = self.object.account.id
+
         try:
-            self.object = self.get_object()
-            if not self.object:
-                return redirect("bills:account-list")
-
-            # 保存账本ID用于重定向
-            account_id = self.object.account.id
-
-            # 执行删除
-            self.object.delete()
+            with transaction.atomic():
+                self.object.delete()
             messages.success(request, "账单删除成功！")
             return redirect("bills:account-detail", pk=account_id)
 
         except Exception as e:
             messages.error(request, f"删除账单时出错：{str(e)}")
-            try:
-                # 尝试重定向到账本详情页
-                if hasattr(self, "account_id"):
-                    return redirect("bills:account-detail", pk=self.account_id)
-            except:
-                pass
-            # 如果获取账本ID失败，返回账本列表
-            return redirect("bills:account-list")
+            return redirect("bills:account-detail", pk=account_id)
