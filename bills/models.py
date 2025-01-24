@@ -85,7 +85,9 @@ class Bill(models.Model):
     )
     category = models.ForeignKey(
         Category,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         verbose_name="分类",
     )
     date = models.DateTimeField(
@@ -97,7 +99,9 @@ class Bill(models.Model):
     )
     created_by = models.ForeignKey(
         "auth.User",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         verbose_name="创建者",
     )
     created_at = models.DateTimeField(
