@@ -238,23 +238,33 @@ class AccountDeleteView(LoginRequiredMixin, DeleteView):
         try:
             self.object = self.get_object()
 
-            # 检查是否有关联的账单
+            # 检查是否有关联的账单，并尝试删除
             bills_count = self.object.bills.count()
             if bills_count > 0:
+                try:
+                    # 先删除所有关联的账单
+                    self.object.bills.all().delete()
+                except Exception as e:
+                    messages.error(
+                        request,
+                        f"删除账单记录时出错：{str(e)}",
+                    )
+                    return redirect("bills:account-detail", pk=self.object.pk)
+
+            # 删除关联的分类
+            try:
+                self.object.categories.all().delete()
+            except Exception as e:
                 messages.error(
                     request,
-                    f"无法删除账本：该账本下还有 {bills_count} 条账单记录，请先删除这些账单。",
+                    f"删除分类时出错：{str(e)}",
                 )
                 return redirect("bills:account-detail", pk=self.object.pk)
 
-            # 先删除关联的分类
-            self.object.categories.all().delete()
-
-            # 如果没有关联账单，执行删除
-            success_url = self.get_success_url()
+            # 最后删除账本
             self.object.delete()
             messages.success(request, "账本删除成功！")
-            return redirect(success_url)
+            return redirect(self.success_url)
 
         except Exception as e:
             messages.error(request, f"删除账本时出错：{str(e)}")
@@ -384,8 +394,10 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
     template_name = "bills/bill_confirm_delete.html"
 
     def get_queryset(self):
-        # 获取基础查询集
-        base_queryset = Bill.objects.select_related("account", "account__family")
+        # 获取基础查询集，预加载必要的关联数据
+        base_queryset = Bill.objects.select_related(
+            "account", "account__family", "category", "created_by"
+        )
 
         # 用户可以删除：
         # 1. 自己创建的账单
@@ -398,14 +410,40 @@ class BillDeleteView(LoginRequiredMixin, DeleteView):
             )
         )
 
-    def get_success_url(self):
-        return reverse_lazy("bills:account-detail", args=[self.object.account.pk])
+    def get_object(self, queryset=None):
+        try:
+            obj = super().get_object(queryset)
+            # 保存账本ID，以防删除后需要重定向
+            self.account_id = obj.account.id
+            return obj
+        except Http404:
+            messages.error(self.request, "找不到要删除的账单或没有删除权限")
+            return None
+        except Exception as e:
+            messages.error(self.request, f"获取账单时出错：{str(e)}")
+            return None
 
     def delete(self, request, *args, **kwargs):
         try:
-            response = super().delete(request, *args, **kwargs)
+            self.object = self.get_object()
+            if not self.object:
+                return redirect("bills:account-list")
+
+            # 保存账本ID用于重定向
+            account_id = self.object.account.id
+
+            # 执行删除
+            self.object.delete()
             messages.success(request, "账单删除成功！")
-            return response
+            return redirect("bills:account-detail", pk=account_id)
+
         except Exception as e:
             messages.error(request, f"删除账单时出错：{str(e)}")
-            return redirect("bills:account-detail", pk=self.get_object().account.pk)
+            try:
+                # 尝试重定向到账本详情页
+                if hasattr(self, "account_id"):
+                    return redirect("bills:account-detail", pk=self.account_id)
+            except:
+                pass
+            # 如果获取账本ID失败，返回账本列表
+            return redirect("bills:account-list")
